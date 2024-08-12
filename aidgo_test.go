@@ -1,10 +1,13 @@
 package aidgo
 
 import (
+	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/base64"
+	"encoding/pem"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -17,24 +20,45 @@ type MockVerifyGenerator struct {
 	mock.Mock
 }
 
-func (m *MockVerifyGenerator) p2p(aid uuid.UUID, msg interface{}) error {
-	args := m.Called(aid, msg)
+func (m *MockVerifyGenerator) p2p(aid uuid.UUID, option string, msg interface{}, certOption interface{}) error {
+	args := m.Called(aid, option, msg, certOption)
 	return args.Error(0)
 }
 
-func (m *MockVerifyGenerator) server(aid uuid.UUID, msg interface{}, info ServerInfo) error {
-	args := m.Called(aid, msg, info)
+func (m *MockVerifyGenerator) server(aid uuid.UUID, option string, msg interface{}, certOption interface{}, info ServerInfo) error {
+	args := m.Called(aid, option, msg, certOption, info)
 	return args.Error(0)
 }
 
-func (m *MockVerifyGenerator) blockchain(aid uuid.UUID, msg interface{}, info ContractInfo) error {
-	args := m.Called(aid, msg, info)
+func (m *MockVerifyGenerator) blockchain(aid uuid.UUID, option string, msg interface{}, certOption interface{}, info ContractInfo) error {
+	args := m.Called(aid, option, msg, certOption, info)
 	return args.Error(0)
 }
 
-func (m *MockVerifyGenerator) full(aid uuid.UUID, msg interface{}, claims map[string]interface{}, serverInfo ServerInfo, contractInfo ContractInfo) error {
-	args := m.Called(aid, msg, claims, serverInfo, contractInfo)
+func (m *MockVerifyGenerator) full(aid uuid.UUID, option string, msg interface{}, certOption interface{}, claims map[string]interface{}, serverInfo ServerInfo, contractInfo ContractInfo) error {
+	args := m.Called(aid, option, msg, certOption, claims, serverInfo, contractInfo)
 	return args.Error(0)
+}
+
+func TestVerifierImpl_VerifyCert(t *testing.T) {
+	v := NewVerifier()
+	aid := uuid.New()
+	cert := AidCert{
+		Aid:      aid,
+		CertType: P2p,
+		VerifyOptions: map[string]interface{}{
+			"test": true,
+		},
+	}
+	_ = v.saveCert(cert)
+
+	mockGenerator := new(MockVerifyGenerator)
+	mockGenerator.On("p2p", aid, "test", "message", true).Return(nil)
+
+	err := v.verifyCert(aid, "test", "message", &VerifyGenerator{p2p: mockGenerator.p2p})
+	assert.NoError(t, err, "verifyCert should not return an error for valid cert")
+
+	mockGenerator.AssertCalled(t, "p2p", aid, "test", "message", true)
 }
 
 func TestNewVerifier(t *testing.T) {
@@ -67,27 +91,6 @@ func TestVerifierImpl_ClearCert(t *testing.T) {
 	_, err = v.getCert(aid)
 	assert.Error(t, err, "getCert should return an error after clearing")
 	assert.IsType(t, NewNotFoundError("test"), err, "Error should be of type NotFoundError")
-}
-
-func TestVerifierImpl_VerifyCert(t *testing.T) {
-	v := NewVerifier()
-	aid := uuid.New()
-	cert := AidCert{
-		Aid:      aid,
-		CertType: P2p,
-		VerifyOptions: map[string]interface{}{
-			"test": true,
-		},
-	}
-	_ = v.saveCert(cert)
-
-	mockGenerator := new(MockVerifyGenerator)
-	mockGenerator.On("p2p", aid, mock.Anything).Return(nil)
-
-	err := v.verifyCert(aid, "test", "message", VerifyGenerator{p2p: mockGenerator.p2p})
-	assert.NoError(t, err, "verifyCert should not return an error for valid cert")
-
-	mockGenerator.AssertCalled(t, "p2p", aid, "message")
 }
 
 func TestVerifierImpl_CacheAndGetRecord(t *testing.T) {
@@ -145,75 +148,75 @@ func TestVerifierImpl_ClearData(t *testing.T) {
 }
 
 func TestVerifierImpl_VerifyCertWithRSA(t *testing.T) {
-	v := NewVerifier()
+	// front-end
 	aid := uuid.New()
 
-	// 生成 RSA 密鑰對
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	assert.NoError(t, err, "Failed to generate RSA key pair")
 
 	publicKey := &privateKey.PublicKey
+	pemPublicKey := pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PUBLIC KEY",
+		Bytes: x509.MarshalPKCS1PublicKey(publicKey),
+	})
+	assert.NotNil(t, pemPublicKey, "Failed to encode public key to PEM")
+	pemPublicKeyBase64 := base64.StdEncoding.EncodeToString(pemPublicKey)
 
-	// 創建一個包含公鑰的證書
 	cert := AidCert{
 		Aid:      aid,
 		CertType: P2p,
 		VerifyOptions: map[string]interface{}{
-			"rsa": map[string]*rsa.PublicKey{
-				"publicKey": publicKey,
+			"rsa": map[string]string{
+				"publicKey": pemPublicKeyBase64,
 			},
 		},
 		Claims: make(map[string]interface{}),
 	}
-
-	err = v.saveCert(cert)
 	assert.NoError(t, err, "Failed to save cert")
 
-	// 創建一個消息並使用公鑰加密
-	originalMsg := "Hello, World!"
-	encryptedMsg, err := rsa.EncryptOAEP(
-		sha256.New(),
-		rand.Reader,
-		publicKey,
-		[]byte(originalMsg),
-		nil,
-	)
-	assert.NoError(t, err, "Failed to encrypt message")
+	originalString := "Hello World!"
+	byteOriginalString := []byte(originalString)
+	hashedMsg := sha256.Sum256(byteOriginalString)
 
-	// 創建一個解密函數作為驗證生成器
-	verifyGenerator := VerifyGenerator{
-		p2p: func(uid uuid.UUID, msg interface{}) error {
-			encryptedBase64, ok := msg.(string)
-			if !ok {
-				return NewBadRequestError("Invalid message format")
-			}
+	signature, err := rsa.SignPKCS1v15(rand.Reader, privateKey, crypto.SHA256, hashedMsg[:])
+	assert.NoError(t, err, "Failed to sign message")
 
-			encryptedBytes, err := base64.StdEncoding.DecodeString(encryptedBase64)
-			if err != nil {
-				return NewBadRequestError("Invalid base64 encoding")
-			}
+	// base64 encode signature
+	signatureBase64 := base64.StdEncoding.EncodeToString(signature)
+	req := []string{originalString, signatureBase64}
 
-			decryptedMsg, err := rsa.DecryptOAEP(
-				sha256.New(),
-				rand.Reader,
-				privateKey,
-				encryptedBytes,
-				nil,
-			)
-			if err != nil {
-				return NewBadRequestError("Decryption failed")
-			}
-
-			if string(decryptedMsg) != originalMsg {
-				return NewBadRequestError("Message mismatch")
-			}
-
-			return nil
-		},
+	// back-end
+	v := NewVerifier()
+	err = v.saveCert(cert)
+	verifyGenerator := NewVerifyGenerator()
+	verifyGenerator.p2p = func(aid uuid.UUID, option string, msg interface{}, certOption interface{}) error {
+		assert.Equal(t, "rsa", option)
+		// msg is a ["Hello World!", "signature"]
+		originalString := msg.([]string)[0]
+		signatureBase64 := msg.([]string)[1]
+		// certOption is a map[string]string{"publicKey": "base64 encoded public key"}
+		publicKeyBase64 := certOption.(map[string]string)["publicKey"]
+		// base64 to []byte
+		signature, err := base64.StdEncoding.DecodeString(signatureBase64)
+		assert.NoError(t, err, "Failed to decode signature")
+		publicKeyByte, err := base64.StdEncoding.DecodeString(publicKeyBase64)
+		assert.NoError(t, err, "Failed to decode public key")
+		// publicKey to rsa.PublicKey
+		block, _ := pem.Decode(publicKeyByte)
+		assert.NotNil(t, block, "Failed to decode PEM block")
+		publicKey, err := x509.ParsePKCS1PublicKey(block.Bytes)
+		assert.NoError(t, err, "Failed to parse public key")
+		// verify the signature
+		hashedMsg := sha256.Sum256([]byte(originalString))
+		err = rsa.VerifyPKCS1v15(publicKey, crypto.SHA256, hashedMsg[:], signature)
+		return err
 	}
 
-	// 執行驗證
-	encryptedBase64 := base64.StdEncoding.EncodeToString(encryptedMsg)
-	err = v.verifyCert(aid, "rsa", encryptedBase64, verifyGenerator)
-	assert.NoError(t, err, "verifyCert should not return an error for valid cert and message")
+	result := v.verifyCert(aid, "rsa", req, verifyGenerator)
+	assert.NoError(t, result, "Failed to verify signature")
+
+	// test invalid signature
+	req[0] = "Hello World"
+	result = v.verifyCert(aid, "rsa", req, verifyGenerator)
+	assert.Error(t, result, "Failed to verify invalid signature")
 }

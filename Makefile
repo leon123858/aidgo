@@ -1,6 +1,7 @@
-NEXT_VERSION := $(shell ./get_next_version.sh)
-
 all:
+	echo "Do nothing"
+
+test:
 	go test -v ./...
 
 deploy:
