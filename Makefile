@@ -4,7 +4,8 @@ all:
 	go test -v ./...
 
 deploy:
-	$(eval NEXT_VERSION := $(bash ./scripts/deploy.sh))
-	@echo "Bumping version to $(NEXT_VERSION)"
-	@git tag $(NEXT_VERSION)
-	@git push origin $(NEXT_VERSION)
+	git ls-remote --tags origin
+	git tag v0.1.1
+	git push origin v0.1.1
+	git tag lastest -f
+	git push origin lastest -f
