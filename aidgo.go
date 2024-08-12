@@ -20,27 +20,27 @@ type Verifier interface {
 
 type VerifyGenerator struct {
 	// p2p aid, option, msg, certOption
-	p2p func(uuid.UUID, string, interface{}, interface{}) error
+	P2p func(uuid.UUID, string, interface{}, interface{}) error
 	// server aid, option, msg, certOption, ServerInfo
-	server func(uuid.UUID, string, interface{}, interface{}, ServerInfo) error
+	Server func(uuid.UUID, string, interface{}, interface{}, ServerInfo) error
 	// blockchain aid, option, msg, certOption, ContractInfo
-	blockchain func(uuid.UUID, string, interface{}, interface{}, ContractInfo) error
+	Blockchain func(uuid.UUID, string, interface{}, interface{}, ContractInfo) error
 	// full aid, option, msg, certOption, claims, ServerInfo, ContractInfo
-	full func(uuid.UUID, string, interface{}, interface{}, map[string]interface{}, ServerInfo, ContractInfo) error
+	Full func(uuid.UUID, string, interface{}, interface{}, map[string]interface{}, ServerInfo, ContractInfo) error
 }
 
 func NewVerifyGenerator() *VerifyGenerator {
 	return &VerifyGenerator{
-		p2p: func(aid uuid.UUID, option string, msg interface{}, certOption interface{}) error {
+		P2p: func(aid uuid.UUID, option string, msg interface{}, certOption interface{}) error {
 			return NewNotImplementedError("p2p not implemented")
 		},
-		server: func(aid uuid.UUID, option string, msg interface{}, certOption interface{}, info ServerInfo) error {
+		Server: func(aid uuid.UUID, option string, msg interface{}, certOption interface{}, info ServerInfo) error {
 			return NewNotImplementedError("server not implemented")
 		},
-		blockchain: func(aid uuid.UUID, option string, msg interface{}, certOption interface{}, info ContractInfo) error {
+		Blockchain: func(aid uuid.UUID, option string, msg interface{}, certOption interface{}, info ContractInfo) error {
 			return NewNotImplementedError("blockchain not implemented")
 		},
-		full: func(aid uuid.UUID, option string, msg interface{}, certOption interface{}, claims map[string]interface{}, serverInfo ServerInfo, contractInfo ContractInfo) error {
+		Full: func(aid uuid.UUID, option string, msg interface{}, certOption interface{}, claims map[string]interface{}, serverInfo ServerInfo, contractInfo ContractInfo) error {
 			return NewNotImplementedError("full not implemented")
 		},
 	}
@@ -91,14 +91,14 @@ func (v *VerifierImpl) verifyCert(aid uuid.UUID, option string, msg interface{},
 	}
 	switch cert.CertType {
 	case P2p:
-		return generator.p2p(aid, option, msg, cert.VerifyOptions[option])
+		return generator.P2p(aid, option, msg, cert.VerifyOptions[option])
 	case Server:
-		return generator.server(aid, option, msg, cert.VerifyOptions[option], cert.ServerInfo)
+		return generator.Server(aid, option, msg, cert.VerifyOptions[option], cert.ServerInfo)
 	case Blockchain:
-		return generator.blockchain(aid, option, msg, cert.VerifyOptions[option], cert.ContractInfo)
+		return generator.Blockchain(aid, option, msg, cert.VerifyOptions[option], cert.ContractInfo)
 	case Full:
 
-		return generator.full(aid, option, msg, cert.VerifyOptions[option], cert.Claims, cert.ServerInfo, cert.ContractInfo)
+		return generator.Full(aid, option, msg, cert.VerifyOptions[option], cert.Claims, cert.ServerInfo, cert.ContractInfo)
 	default:
 		return NewNotImplementedError("CertType not implemented")
 	}

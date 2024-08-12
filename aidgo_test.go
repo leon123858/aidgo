@@ -55,7 +55,7 @@ func TestVerifierImpl_VerifyCert(t *testing.T) {
 	mockGenerator := new(MockVerifyGenerator)
 	mockGenerator.On("p2p", aid, "test", "message", true).Return(nil)
 
-	err := v.verifyCert(aid, "test", "message", &VerifyGenerator{p2p: mockGenerator.p2p})
+	err := v.verifyCert(aid, "test", "message", &VerifyGenerator{P2p: mockGenerator.p2p})
 	assert.NoError(t, err, "verifyCert should not return an error for valid cert")
 
 	mockGenerator.AssertCalled(t, "p2p", aid, "test", "message", true)
@@ -189,7 +189,7 @@ func TestVerifierImpl_VerifyCertWithRSA(t *testing.T) {
 	v := NewVerifier()
 	err = v.saveCert(cert)
 	verifyGenerator := NewVerifyGenerator()
-	verifyGenerator.p2p = func(aid uuid.UUID, option string, msg interface{}, certOption interface{}) error {
+	verifyGenerator.P2p = func(aid uuid.UUID, option string, msg interface{}, certOption interface{}) error {
 		assert.Equal(t, "rsa", option)
 		// msg is a ["Hello World!", "signature"]
 		originalString := msg.([]string)[0]
