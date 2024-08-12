@@ -50,13 +50,13 @@ func TestVerifierImpl_VerifyCert(t *testing.T) {
 			"test": true,
 		},
 	}
-	_ = v.saveCert(cert)
+	_ = v.SaveCert(cert)
 
 	mockGenerator := new(MockVerifyGenerator)
 	mockGenerator.On("p2p", aid, "test", "message", true).Return(nil)
 
-	err := v.verifyCert(aid, "test", "message", &VerifyGenerator{P2p: mockGenerator.p2p})
-	assert.NoError(t, err, "verifyCert should not return an error for valid cert")
+	err := v.VerifyCert(aid, "test", "message", &VerifyGenerator{P2p: mockGenerator.p2p})
+	assert.NoError(t, err, "VerifyCert should not return an error for valid cert")
 
 	mockGenerator.AssertCalled(t, "p2p", aid, "test", "message", true)
 }
@@ -71,12 +71,12 @@ func TestVerifierImpl_SaveAndGetCert(t *testing.T) {
 	aid := uuid.New()
 	cert := AidCert{Aid: aid, CertType: P2p}
 
-	err := v.saveCert(cert)
-	assert.NoError(t, err, "saveCert should not return an error")
+	err := v.SaveCert(cert)
+	assert.NoError(t, err, "SaveCert should not return an error")
 
-	savedCert, err := v.getCert(aid)
-	assert.NoError(t, err, "getCert should not return an error")
-	assert.Equal(t, cert, savedCert, "getCert should return the saved cert")
+	savedCert, err := v.GetCert(aid)
+	assert.NoError(t, err, "GetCert should not return an error")
+	assert.Equal(t, cert, savedCert, "GetCert should return the saved cert")
 }
 
 func TestVerifierImpl_ClearCert(t *testing.T) {
@@ -84,12 +84,12 @@ func TestVerifierImpl_ClearCert(t *testing.T) {
 	aid := uuid.New()
 	cert := AidCert{Aid: aid, CertType: P2p}
 
-	_ = v.saveCert(cert)
-	err := v.clearCert(cert)
-	assert.NoError(t, err, "clearCert should not return an error")
+	_ = v.SaveCert(cert)
+	err := v.ClearCert(cert)
+	assert.NoError(t, err, "ClearCert should not return an error")
 
-	_, err = v.getCert(aid)
-	assert.Error(t, err, "getCert should return an error after clearing")
+	_, err = v.GetCert(aid)
+	assert.Error(t, err, "GetCert should return an error after clearing")
 	assert.IsType(t, NewNotFoundError("test"), err, "Error should be of type NotFoundError")
 }
 
@@ -98,12 +98,12 @@ func TestVerifierImpl_CacheAndGetRecord(t *testing.T) {
 	aid := uuid.New()
 	record := AidRecord{Aid: aid, Option: "test", TimeStamp: time.Now(), Msg: "test message"}
 
-	err := v.cacheRecord(record)
-	assert.NoError(t, err, "cacheRecord should not return an error")
+	err := v.CacheRecord(record)
+	assert.NoError(t, err, "CacheRecord should not return an error")
 
-	savedRecord, err := v.getRecord(aid)
-	assert.NoError(t, err, "getRecord should not return an error")
-	assert.Equal(t, record, savedRecord, "getRecord should return the cached record")
+	savedRecord, err := v.GetRecord(aid)
+	assert.NoError(t, err, "GetRecord should not return an error")
+	assert.Equal(t, record, savedRecord, "GetRecord should return the cached record")
 }
 
 func TestVerifierImpl_ClearRecord(t *testing.T) {
@@ -111,12 +111,12 @@ func TestVerifierImpl_ClearRecord(t *testing.T) {
 	aid := uuid.New()
 	record := AidRecord{Aid: aid, Option: "test", TimeStamp: time.Now(), Msg: "test message"}
 
-	_ = v.cacheRecord(record)
-	err := v.clearRecord(aid)
-	assert.NoError(t, err, "clearRecord should not return an error")
+	_ = v.CacheRecord(record)
+	err := v.ClearRecord(aid)
+	assert.NoError(t, err, "ClearRecord should not return an error")
 
-	_, err = v.getRecord(aid)
-	assert.Error(t, err, "getRecord should return an error after clearing")
+	_, err = v.GetRecord(aid)
+	assert.Error(t, err, "GetRecord should return an error after clearing")
 	assert.IsType(t, NewNotFoundError("not found"), err, "Error should be of type NotFoundError")
 }
 
@@ -125,12 +125,12 @@ func TestVerifierImpl_SaveAndGetData(t *testing.T) {
 	aid := uuid.New()
 	data := AidData{Aid: aid, Data: map[string]interface{}{"test": "data"}}
 
-	err := v.saveData(data)
-	assert.NoError(t, err, "saveData should not return an error")
+	err := v.SaveData(data)
+	assert.NoError(t, err, "SaveData should not return an error")
 
-	savedData, err := v.getData(aid)
-	assert.NoError(t, err, "getData should not return an error")
-	assert.Equal(t, data, savedData, "getData should return the saved data")
+	savedData, err := v.GetData(aid)
+	assert.NoError(t, err, "GetData should not return an error")
+	assert.Equal(t, data, savedData, "GetData should return the saved data")
 }
 
 func TestVerifierImpl_ClearData(t *testing.T) {
@@ -138,12 +138,12 @@ func TestVerifierImpl_ClearData(t *testing.T) {
 	aid := uuid.New()
 	data := AidData{Aid: aid, Data: map[string]interface{}{"test": "data"}}
 
-	_ = v.saveData(data)
-	err := v.clearData(aid)
-	assert.NoError(t, err, "clearData should not return an error")
+	_ = v.SaveData(data)
+	err := v.ClearData(aid)
+	assert.NoError(t, err, "ClearData should not return an error")
 
-	_, err = v.getData(aid)
-	assert.Error(t, err, "getData should return an error after clearing")
+	_, err = v.GetData(aid)
+	assert.Error(t, err, "GetData should return an error after clearing")
 	assert.IsType(t, err, err, "Error should be of type NotFoundError")
 }
 
@@ -187,7 +187,7 @@ func TestVerifierImpl_VerifyCertWithRSA(t *testing.T) {
 
 	// back-end
 	v := NewVerifier()
-	err = v.saveCert(cert)
+	err = v.SaveCert(cert)
 	verifyGenerator := NewVerifyGenerator()
 	verifyGenerator.P2p = func(aid uuid.UUID, option string, msg interface{}, certOption interface{}) error {
 		assert.Equal(t, "rsa", option)
@@ -212,11 +212,11 @@ func TestVerifierImpl_VerifyCertWithRSA(t *testing.T) {
 		return err
 	}
 
-	result := v.verifyCert(aid, "rsa", req, verifyGenerator)
+	result := v.VerifyCert(aid, "rsa", req, verifyGenerator)
 	assert.NoError(t, result, "Failed to verify signature")
 
 	// test invalid signature
 	req[0] = "Hello World"
-	result = v.verifyCert(aid, "rsa", req, verifyGenerator)
+	result = v.VerifyCert(aid, "rsa", req, verifyGenerator)
 	assert.Error(t, result, "Failed to verify invalid signature")
 }

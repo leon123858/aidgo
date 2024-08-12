@@ -3,19 +3,19 @@ package aidgo
 import "github.com/google/uuid"
 
 type Verifier interface {
-	// cert related
-	saveCert(cert AidCert) error
-	clearCert(cert AidCert) error
-	getCert(aid uuid.UUID) (AidCert, error)
-	verifyCert(aid uuid.UUID, option string, msg interface{}, generator *VerifyGenerator) error
-	// record related
-	cacheRecord(record AidRecord) error
-	getRecord(aid uuid.UUID) (AidRecord, error)
-	clearRecord(aid uuid.UUID) error
-	// data related
-	saveData(data AidData) error
-	getData(aid uuid.UUID) (AidData, error)
-	clearData(aid uuid.UUID) error
+	// SaveCert cert related
+	SaveCert(cert AidCert) error
+	ClearCert(cert AidCert) error
+	GetCert(aid uuid.UUID) (AidCert, error)
+	VerifyCert(aid uuid.UUID, option string, msg interface{}, generator *VerifyGenerator) error
+	// CacheRecord record related
+	CacheRecord(record AidRecord) error
+	GetRecord(aid uuid.UUID) (AidRecord, error)
+	ClearRecord(aid uuid.UUID) error
+	// SaveData data related
+	SaveData(data AidData) error
+	GetData(aid uuid.UUID) (AidData, error)
+	ClearData(aid uuid.UUID) error
 }
 
 type VerifyGenerator struct {
@@ -63,17 +63,17 @@ func NewVerifier() *VerifierImpl {
 	}
 }
 
-func (v *VerifierImpl) saveCert(cert AidCert) error {
+func (v *VerifierImpl) SaveCert(cert AidCert) error {
 	v.Certs[cert.Aid] = cert
 	return nil
 }
 
-func (v *VerifierImpl) clearCert(cert AidCert) error {
+func (v *VerifierImpl) ClearCert(cert AidCert) error {
 	delete(v.Certs, cert.Aid)
 	return nil
 }
 
-func (v *VerifierImpl) getCert(aid uuid.UUID) (AidCert, error) {
+func (v *VerifierImpl) GetCert(aid uuid.UUID) (AidCert, error) {
 	cert, ok := v.Certs[aid]
 	if !ok {
 		return AidCert{}, NewNotFoundError("Cert not found")
@@ -81,8 +81,8 @@ func (v *VerifierImpl) getCert(aid uuid.UUID) (AidCert, error) {
 	return cert, nil
 }
 
-func (v *VerifierImpl) verifyCert(aid uuid.UUID, option string, msg interface{}, generator *VerifyGenerator) error {
-	cert, err := v.getCert(aid)
+func (v *VerifierImpl) VerifyCert(aid uuid.UUID, option string, msg interface{}, generator *VerifyGenerator) error {
+	cert, err := v.GetCert(aid)
 	if err != nil {
 		return err
 	}
@@ -104,12 +104,12 @@ func (v *VerifierImpl) verifyCert(aid uuid.UUID, option string, msg interface{},
 	}
 }
 
-func (v *VerifierImpl) cacheRecord(record AidRecord) error {
+func (v *VerifierImpl) CacheRecord(record AidRecord) error {
 	v.Records[record.Aid] = record
 	return nil
 }
 
-func (v *VerifierImpl) getRecord(aid uuid.UUID) (AidRecord, error) {
+func (v *VerifierImpl) GetRecord(aid uuid.UUID) (AidRecord, error) {
 	record, ok := v.Records[aid]
 	if !ok {
 		return AidRecord{}, NewNotFoundError("Record not found")
@@ -117,17 +117,17 @@ func (v *VerifierImpl) getRecord(aid uuid.UUID) (AidRecord, error) {
 	return record, nil
 }
 
-func (v *VerifierImpl) clearRecord(aid uuid.UUID) error {
+func (v *VerifierImpl) ClearRecord(aid uuid.UUID) error {
 	delete(v.Records, aid)
 	return nil
 }
 
-func (v *VerifierImpl) saveData(data AidData) error {
+func (v *VerifierImpl) SaveData(data AidData) error {
 	v.Data[data.Aid] = data
 	return nil
 }
 
-func (v *VerifierImpl) getData(aid uuid.UUID) (AidData, error) {
+func (v *VerifierImpl) GetData(aid uuid.UUID) (AidData, error) {
 	data, ok := v.Data[aid]
 	if !ok {
 		return AidData{}, NewNotFoundError("Data not found")
@@ -135,7 +135,7 @@ func (v *VerifierImpl) getData(aid uuid.UUID) (AidData, error) {
 	return data, nil
 }
 
-func (v *VerifierImpl) clearData(aid uuid.UUID) error {
+func (v *VerifierImpl) ClearData(aid uuid.UUID) error {
 	delete(v.Data, aid)
 	return nil
 }
