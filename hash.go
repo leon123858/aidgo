@@ -2,6 +2,7 @@ package aidgo
 
 import (
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"sort"
 )
@@ -38,7 +39,11 @@ func sortedPrintMap(m map[string]interface{}) *string {
 	// print map
 	str := ""
 	for v := range keys {
-		str += keys[v] + fmt.Sprintf("%v", m[keys[v]])
+		val, err := json.Marshal(m[keys[v]])
+		if err != nil {
+			continue
+		}
+		str += keys[v] + fmt.Sprintf("%v", val)
 	}
 	return &str
 }
