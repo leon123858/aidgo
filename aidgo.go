@@ -23,7 +23,7 @@ type VerifyGenerator struct {
 	P2p func(uuid.UUID, string, interface{}, interface{}) error
 	// server aid, option, msg, AidCert, ServerInfo
 	Server func(uuid.UUID, string, interface{}, AidCert, ServerInfo) error
-	// blockchain aid, option, msg, certOption, ContractInfo
+	// blockchain aid, option, msg, AidCert, ContractInfo
 	Blockchain func(uuid.UUID, string, interface{}, interface{}, ContractInfo) error
 	// full aid, option, msg, certOption, claims, ServerInfo, ContractInfo
 	Full func(uuid.UUID, string, interface{}, interface{}, map[string]interface{}, ServerInfo, ContractInfo) error
@@ -95,7 +95,7 @@ func (v *VerifierImpl) VerifyCert(aid uuid.UUID, option string, msg interface{},
 	case Server:
 		return generator.Server(aid, option, msg, cert, cert.ServerInfo)
 	case Blockchain:
-		return generator.Blockchain(aid, option, msg, cert.VerifyOptions[option], cert.ContractInfo)
+		return generator.Blockchain(aid, option, msg, cert, cert.ContractInfo)
 	case Full:
 
 		return generator.Full(aid, option, msg, cert.VerifyOptions[option], cert.Claims, cert.ServerInfo, cert.ContractInfo)
