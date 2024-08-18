@@ -250,5 +250,5 @@ func Test_HashCert(t *testing.T) {
 
 	hash := cert.Hash()
 	assert.NotEmpty(t, hash, "Hash should not be empty")
-	assert.Equal(t, "620ba885ce9dca28493082f7b46966f854cce9ac341b83a9eedb93bcbe0bab7a", hash, "Hash should be deterministic")
+	assert.Equal(t, "c8487cd33f33d31ea4c9c01458353f0662010a3096460a8bdc4a8e30b105fb0b", hash, "Hash should be deterministic")
 }

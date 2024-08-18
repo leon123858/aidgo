@@ -2,8 +2,8 @@ package aidgo
 
 import (
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"sort"
 )
 
@@ -43,11 +43,12 @@ func sortedPrintMap(m map[string]interface{}) *string {
 		if err != nil {
 			continue
 		}
-		str += keys[v] + fmt.Sprintf("%v", val)
+		str += keys[v] + string(val)
 	}
 	return &str
 }
 
 func hashString(str string) string {
-	return fmt.Sprintf("%x", sha256.Sum256([]byte(str)))
+	hash := sha256.Sum256([]byte(str))
+	return hex.EncodeToString(hash[:])
 }
