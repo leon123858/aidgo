@@ -21,6 +21,7 @@ type ContractInfo struct {
 
 type ServerInfo struct {
 	ServerAddress string
+	Sign          string
 }
 
 type AidCert struct {
