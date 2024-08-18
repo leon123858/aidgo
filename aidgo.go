@@ -21,8 +21,8 @@ type Verifier interface {
 type VerifyGenerator struct {
 	// p2p aid, option, msg, certOption
 	P2p func(uuid.UUID, string, interface{}, interface{}) error
-	// server aid, option, msg, certOption, ServerInfo
-	Server func(uuid.UUID, string, interface{}, interface{}, ServerInfo) error
+	// server aid, option, msg, AidCert, ServerInfo
+	Server func(uuid.UUID, string, interface{}, AidCert, ServerInfo) error
 	// blockchain aid, option, msg, certOption, ContractInfo
 	Blockchain func(uuid.UUID, string, interface{}, interface{}, ContractInfo) error
 	// full aid, option, msg, certOption, claims, ServerInfo, ContractInfo
@@ -34,7 +34,7 @@ func NewVerifyGenerator() *VerifyGenerator {
 		P2p: func(aid uuid.UUID, option string, msg interface{}, certOption interface{}) error {
 			return NewNotImplementedError("p2p not implemented")
 		},
-		Server: func(aid uuid.UUID, option string, msg interface{}, certOption interface{}, info ServerInfo) error {
+		Server: func(aid uuid.UUID, option string, msg interface{}, cert AidCert, info ServerInfo) error {
 			return NewNotImplementedError("server not implemented")
 		},
 		Blockchain: func(aid uuid.UUID, option string, msg interface{}, certOption interface{}, info ContractInfo) error {
@@ -93,7 +93,7 @@ func (v *VerifierImpl) VerifyCert(aid uuid.UUID, option string, msg interface{},
 	case P2p:
 		return generator.P2p(aid, option, msg, cert.VerifyOptions[option])
 	case Server:
-		return generator.Server(aid, option, msg, cert.VerifyOptions[option], cert.ServerInfo)
+		return generator.Server(aid, option, msg, cert, cert.ServerInfo)
 	case Blockchain:
 		return generator.Blockchain(aid, option, msg, cert.VerifyOptions[option], cert.ContractInfo)
 	case Full:
