@@ -220,3 +220,35 @@ func TestVerifierImpl_VerifyCertWithRSA(t *testing.T) {
 	result = v.VerifyCert(aid, "rsa", req, verifyGenerator)
 	assert.Error(t, result, "Failed to verify invalid signature")
 }
+
+func Test_HashCert(t *testing.T) {
+	aid := "12345678-1234-1234-1234-1234567890ab"
+	uid, err := uuid.Parse(aid)
+	assert.NoError(t, err, "Failed to parse UUID")
+	cert := AidCert{
+		Aid: uid,
+		ContractInfo: ContractInfo{
+			ContractAddress: "0x1234567890",
+			BlockChainUrl:   "http://localhost:8545",
+		},
+		ServerInfo: ServerInfo{
+			ServerAddress: "127.0.0.1",
+		},
+		Claims: map[string]interface{}{
+			"claim1": "value1",
+			"claim2": 42,
+		},
+		Setting: map[string]interface{}{
+			"setting1": "value1",
+			"setting2": 42,
+		},
+		VerifyOptions: map[string]interface{}{
+			"option1": "value1",
+			"option2": 42,
+		},
+	}
+
+	hash := cert.Hash()
+	assert.NotEmpty(t, hash, "Hash should not be empty")
+	assert.Equal(t, "7983aa8470969458f8b4750b190fa7197bbeb6e61c81757fe14619e6cbfe42f2", hash, "Hash should be deterministic")
+}
