@@ -24,9 +24,9 @@ type VerifyGenerator struct {
 	// server aid, option, msg, AidCert, ServerInfo
 	Server func(uuid.UUID, string, interface{}, AidCert, ServerInfo) error
 	// blockchain aid, option, msg, AidCert, ContractInfo
-	Blockchain func(uuid.UUID, string, interface{}, interface{}, ContractInfo) error
-	// full aid, option, msg, certOption, claims, ServerInfo, ContractInfo
-	Full func(uuid.UUID, string, interface{}, interface{}, map[string]interface{}, ServerInfo, ContractInfo) error
+	Blockchain func(uuid.UUID, string, interface{}, AidCert, ContractInfo) error
+	// full aid, option, msg, AidCert, claims, ServerInfo, ContractInfo
+	Full func(uuid.UUID, string, interface{}, AidCert, map[string]interface{}, ServerInfo, ContractInfo) error
 }
 
 func NewVerifyGenerator() *VerifyGenerator {
@@ -37,10 +37,10 @@ func NewVerifyGenerator() *VerifyGenerator {
 		Server: func(aid uuid.UUID, option string, msg interface{}, cert AidCert, info ServerInfo) error {
 			return NewNotImplementedError("server not implemented")
 		},
-		Blockchain: func(aid uuid.UUID, option string, msg interface{}, certOption interface{}, info ContractInfo) error {
+		Blockchain: func(aid uuid.UUID, option string, msg interface{}, cert AidCert, info ContractInfo) error {
 			return NewNotImplementedError("blockchain not implemented")
 		},
-		Full: func(aid uuid.UUID, option string, msg interface{}, certOption interface{}, claims map[string]interface{}, serverInfo ServerInfo, contractInfo ContractInfo) error {
+		Full: func(aid uuid.UUID, option string, msg interface{}, cert AidCert, claims map[string]interface{}, serverInfo ServerInfo, contractInfo ContractInfo) error {
 			return NewNotImplementedError("full not implemented")
 		},
 	}
@@ -98,7 +98,7 @@ func (v *VerifierImpl) VerifyCert(aid uuid.UUID, option string, msg interface{},
 		return generator.Blockchain(aid, option, msg, cert, cert.ContractInfo)
 	case Full:
 
-		return generator.Full(aid, option, msg, cert.VerifyOptions[option], cert.Claims, cert.ServerInfo, cert.ContractInfo)
+		return generator.Full(aid, option, msg, cert, cert.Claims, cert.ServerInfo, cert.ContractInfo)
 	default:
 		return NewNotImplementedError("CertType not implemented")
 	}
