@@ -3,6 +3,7 @@ package aidgo
 import (
 	"crypto/sha256"
 	"fmt"
+	"sort"
 )
 
 func (cert *AidCert) Hash(strategy ...func(cert *AidCert) string) string {
@@ -21,16 +22,25 @@ func cert2String(cert *AidCert) string {
 	str += cert.ContractInfo.ContractAddress
 	str += cert.ContractInfo.BlockChainUrl
 	str += cert.ServerInfo.ServerAddress
-	for k, v := range cert.Claims {
-		str += k + fmt.Sprintf("%v", v)
-	}
-	for k, v := range cert.Setting {
-		str += k + fmt.Sprintf("%v", v)
-	}
-	for k, v := range cert.VerifyOptions {
-		str += k + fmt.Sprintf("%v", v)
-	}
+	str += *sortedPrintMap(cert.Claims)
+	str += *sortedPrintMap(cert.Setting)
+	str += *sortedPrintMap(cert.VerifyOptions)
 	return str
+}
+
+func sortedPrintMap(m map[string]interface{}) *string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	// sort keys
+	sort.Strings(keys)
+	// print map
+	str := ""
+	for v := range keys {
+		str += keys[v] + fmt.Sprintf("%v", m[keys[v]])
+	}
+	return &str
 }
 
 func hashString(str string) string {

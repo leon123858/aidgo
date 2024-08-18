@@ -222,7 +222,7 @@ func TestVerifierImpl_VerifyCertWithRSA(t *testing.T) {
 }
 
 func Test_HashCert(t *testing.T) {
-	aid := "12345678-1234-1234-1234-1234567890ab"
+	aid := "65236855-dec4-4fd7-ae74-8d4d79668e34"
 	uid, err := uuid.Parse(aid)
 	assert.NoError(t, err, "Failed to parse UUID")
 	cert := AidCert{
@@ -250,5 +250,5 @@ func Test_HashCert(t *testing.T) {
 
 	hash := cert.Hash()
 	assert.NotEmpty(t, hash, "Hash should not be empty")
-	assert.Equal(t, "7983aa8470969458f8b4750b190fa7197bbeb6e61c81757fe14619e6cbfe42f2", hash, "Hash should be deterministic")
+	assert.Equal(t, "e977dd1018de576a18132a412cfda8af6b4bdcbf4ba9cbbe0e56289c9372712f", hash, "Hash should be deterministic")
 }
